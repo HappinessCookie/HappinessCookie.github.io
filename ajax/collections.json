@@ -1,0 +1,16 @@
+[
+  {
+    "name": "Коллекция 1",
+    "server_groups": "ajax/groups.json",
+    "server_elements": "ajax/elements.json",
+    "ID": 1,
+    "group": 1
+  },
+  {
+    "name": "Коллекция 2",
+    "server_groups": "",
+    "server_elements": "",
+    "ID": 2,
+    "group": 2
+  }
+]

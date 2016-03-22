@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KRUS-test</title>
+  <link href="css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    #main div {
+      margin-left: 10px;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <p class="h1 text-center" data-toggle="modal" data-target="#myModal">Дерево</p>
+  <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span></button>
+          <h4 class="modal-title" id="myModalLabel">Modal title</h4>
+        </div>
+        <div class="modal-body">
+          <div id="el">
+            <div v-for="group in collections_group" v-if="group.group">
+              <p>NAME: {{group.name}}</p>
+              <p>ID: {{group.ID}}</p>
+              <hr>
+            </div>
+          </div>
+          <div id="main"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary">Save changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <br>
+  <table id="table_collections_group" class="table table-bordered table-responsive">
+    <thead>
+      <tr>
+        <th data-sort="string">name</th>
+        <th data-sort="int">id</th>
+        <th data-sort="int">group</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  <table id="table_collections" class="table table-bordered table-responsive">
+    <thead>
+      <tr>
+        <th data-sort="string">name</th>
+        <th data-sort="string">server_groups</th>
+        <th data-sort="string">server_elements</th>
+        <th data-sort="int">ID</th>
+        <th data-sort="int">group</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  <table id="table_groups" class="table table-bordered table-responsive">
+    <thead>
+      <tr>
+        <th data-sort="string">name</th>
+        <th data-sort="int">id</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  <table id="table_elements" class="table table-bordered table-responsive">
+    <thead>
+      <tr>
+        <th data-sort="string">name</th>
+        <th data-sort="int">group</th>
+        <th data-sort="int">id</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+<script src="js/bootstrap.min.js"></script>
+<script src="js/stupidtable.min.js"></script>
+<script>
+  var $main = $("#main");
+  function get_collections_group() {
+    $.getJSON("ajax/collections_group.json", function (data) {
+      $.each(data, function (key, val) {
+        if (!val.group) {
+          $("<div/>", {id: val["ID"], class: "collections_group", html: val.name}).appendTo("#main");
+        } else {
+          $("<div/>", {
+            id: val["ID"],
+            class: "collections_group",
+            html: val.name
+          }).appendTo($main.find(".collections_group#" + val.group));
+        }
+        // table
+        var $table = $("#table_collections_group"),
+            $table_body = $table.find("tbody");
+        $table_body.append("<tr><td>" + val.name + "</td><td>" + val["ID"] + "</td><td>" + val.group + "</td></tr>");
+        $table.stupidtable();
+      });
+      get_collections();
+    });
+  }
+  function get_collections() {
+    $.getJSON("ajax/collections.json", function (data) {
+      $.each(data, function (key, val) {
+        $("<div/>", {
+          id: val["ID"],
+          class: "collections",
+          html: val.name
+        }).appendTo($main.find(".collections_group#" + val.group));
+        get_groups({
+          "server_groups": val["server_groups"],
+          "server_elements": val["server_elements"],
+          "collections_id": val["ID"]
+        });
+        // table
+        var $table = $("#table_collections"),
+            $table_body = $table.find("tbody");
+        $table_body.append("<tr><td>" + val.name + "</td><td>" + val.server_groups + "</td><td>" + val.server_elements + "</td><td>" + val["ID"] + "</td><td>" + val.group + "</td></tr>");
+        $table.stupidtable();
+      });
+    });
+  }
+  function get_groups(params) {
+    $.getJSON(params.server_groups, function (data) {
+      $.each(data, function (key, val) {
+        if (!val.group) {
+          $("<div/>", {
+            id: val["ID"],
+            class: "groups",
+            html: val.name
+          }).appendTo($main.find(".collections#" + params.collections_id));
+        } else {
+          $("<div/>", {
+            id: val["ID"],
+            class: "groups",
+            html: val.name
+          }).appendTo($main.find(".collections#" + params.collections_id).find(".groups#" + val.group));
+        }
+        // table
+        var $table = $("#table_groups"),
+            $table_body = $table.find("tbody");
+        $table_body.append("<tr><td>" + val.name + "</td><td>" + val["ID"] + "</td></tr>");
+        $table.stupidtable();
+      });
+      get_elements({
+        "server_elements": params.server_elements,
+        "collections_id": params.collections_id
+      });
+    });
+  }
+  function get_elements(params) {
+    $.getJSON(params.server_elements, function (data) {
+      $.each(data, function (key, val) {
+        $("<div/>", {
+          id: val["ID"],
+          class: "elements",
+          html: val.name
+        }).appendTo($main.find(".collections#" + params.collections_id).find(".groups#" + val.group));
+        // table
+        var $table = $("#table_elements"),
+            $table_body = $table.find("tbody");
+        $table_body.append("<tr><td>" + val.name + "</td><td>" + val.group + "</td><td>" + val["ID"] + "</td></tr>");
+        $table.stupidtable();
+      });
+    });
+  }
+  get_collections_group();
+</script>
+</body>
+</html>
